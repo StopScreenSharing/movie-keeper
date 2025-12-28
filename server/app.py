@@ -59,7 +59,12 @@ class CheckSession(Resource):
                 return user_schema.dump(user), 200
         return {"message": "Not logged in"}, 401
 
-
+class Logout(Resource):
+    def delete(self):
+        if session.get('user_id'):
+            session.clear()
+            return {"message": "Logged out successfully"}, 200
+        return {"error": "Not logged in"}, 401
 
 
 
