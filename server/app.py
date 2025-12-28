@@ -3,15 +3,41 @@
 # Standard library imports
 
 # Remote library imports
-from flask import request
+from flask import request, session, jsonify, abort
 from flask_restful import Resource
 
 # Local imports
-from config import app, db, api
+from config import app, db, api, bcrypt
 # Add your model imports
 from models import User, Movie, Genre
+from schema import user_schema, flat_genres_schema
 
 # Views go here!
+class Signup(Resource):
+    def post(self):
+        data = request.get_json()
+
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return {"error": "Username and password required"}, 422
+        
+        if User.query.filter_by(username=username).first():
+            return {"error": "Username already taken"}, 422
+        
+        new_user = User(username=username)
+        new_user.password = password
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        session['user_id'] = new_user.id
+
+        return user_schema.dump(new_user), 201
+
+
+
 
 @app.route('/')
 def index():
