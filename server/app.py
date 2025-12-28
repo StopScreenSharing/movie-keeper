@@ -50,6 +50,17 @@ class Login(Resource):
             return user_schema.dump(user), 200
         return {"error": "Invalid username or password"}, 401
 
+class CheckSession(Resource):
+    def get(self):
+        user_id = session.get('user_id')
+        if user_id:
+            user = User.query.filter(User.id == user_id).first()
+            if user:
+                return user_schema.dump(user), 200
+        return {"message": "Not logged in"}, 401
+
+
+
 
 
 
