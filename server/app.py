@@ -10,7 +10,7 @@ from flask_restful import Resource
 from config import app, db, api, bcrypt
 # Add your model imports
 from models import User, Movie, Genre
-from schema import user_schema, flat_genres_schema
+from schemas import user_schema, flat_genres_schema
 
 # Views go here!
 class Signup(Resource):
@@ -65,6 +65,11 @@ class Logout(Resource):
             session.clear()
             return {"message": "Logged out successfully"}, 200
         return {"error": "Not logged in"}, 401
+
+api.add_resource(Signup, '/signup')
+api.add_resource(Login, '/login')
+api.add_resource(CheckSession, '/check_session')
+api.add_resource(Logout, '/logout')
 
 
 

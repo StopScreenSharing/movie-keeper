@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from sqlalchemy import MetaData
 from flask_bcrypt import Bcrypt
-
+import os
 
 
 # Local imports
@@ -19,6 +19,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
+
+app.secret_key = os.environ.get('SECRET_KEY') or 'secret-key-for-movie-tracker'
 
 # Define metadata, instantiate db
 metadata = MetaData(naming_convention={
