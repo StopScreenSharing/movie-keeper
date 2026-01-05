@@ -14,6 +14,8 @@ from models import User, Movie, Genre
 from schemas import user_schema, flat_genres_schema, movie_schema, movies_schema
 
 # Views go here!
+
+# USER CREATE AND READ #
 class Signup(Resource):
     def post(self):
         data = request.get_json()
@@ -157,7 +159,33 @@ class MovieDetail(Resource):
         db.session.delete(movie)
         db.session.commit()
         return {"message": "Movie deleted"}, 200
+
+# GENRE CREATE AND READ #
+
+class GenreList(Resource):
+    def get(self):
+        genres = Genre.query.order_by(Genre.name).all()
+        return flat_genres_schema.dump(genres), 200
     
+    def post(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": "Unauthorized"}, 401
+        
+        data = request.get_json()
+        name = data.get('name')
+
+        if not name:
+            return {"error": "Name is required"}, 422
+        
+        if Genre.query.filter_by(name=name.strip()).first():
+            return {"error": "Genre already exists"}, 422
+        
+        new_genre = Genre(name=name.strip())
+        db.session.add(new_genre)
+        db.session.commit()
+
+        return flat_genres_schema.dump(new_genre), 201
     
 
 api.add_resource(Signup, '/signup')
