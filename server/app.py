@@ -145,6 +145,20 @@ class MovieDetail(Resource):
         db.session.commit()
         return movie_schema.dump(movie), 200
     
+    def delete(self, id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": "Unauthorized"}, 401
+        
+        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
+        if not movie:
+            return {"error": "Movie not found"}, 404
+        
+        db.session.delete(movie)
+        db.session.commit()
+        return {"message": "Movie deleted"}, 200
+    
+    
 
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
