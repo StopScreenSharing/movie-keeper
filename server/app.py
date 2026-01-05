@@ -105,6 +105,47 @@ class MovieList(Resource):
         
         return movie_schema.dump(new_movie), 201
 
+class MovieDetail(Resource):
+    def get(self, id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": "Unauthorized"}, 401
+        
+        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
+        if not movie:
+            return {"error": "Movie not found"}, 404
+        
+        return movie_schema.dump(movie), 200
+    
+    def patch(self, id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": 'Unauthorized'}, 401
+        
+        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
+        if not movie:
+            return {"error": "Movie bot found"}, 404
+        
+        data = request.get_json()
+        title = data.get('title')
+        genre_ids = data.get('genre_ids')
+
+        if title is not None:
+            movie.title = title
+        
+        if genre_ids is not None:
+            if not genre_ids:
+                movie.genres = []
+            else:
+                genres = Genre.query.filter(Genre.id.in_(genre_ids)).all()
+                if len(genres) != len(genre_ids):
+                    return {"error": "One or more genre IDs are invalid"}, 422
+                movie.genres = genres
+        
+        db.session.commit()
+        return movie_schema.dump(movie), 200
+    
+
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(CheckSession, '/check_session')
