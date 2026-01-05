@@ -5,12 +5,13 @@
 # Remote library imports
 from flask import request, session, jsonify, abort
 from flask_restful import Resource
+from sqlalchemy.exc import IntegrityError
 
 # Local imports
 from config import app, db, api, bcrypt
 # Add your model imports
 from models import User, Movie, Genre
-from schemas import user_schema, flat_genres_schema
+from schemas import user_schema, flat_genres_schema, movie_schema, movies_schema
 
 # Views go here!
 class Signup(Resource):
@@ -65,6 +66,44 @@ class Logout(Resource):
             session.clear()
             return {"message": "Logged out successfully"}, 200
         return {"error": "Not logged in"}, 401
+
+
+# MOVIE CRUD #
+class MovieList(Resource):
+    def get(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": "Unauthorized"}, 401
+        
+        movies = Movie.query.filter_by(user_id=user_id).all()
+        return movies_schema.dump(movies), 200
+    
+    def post(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return {"error": "Unauthorized"}, 401
+        
+        data = request.get_json()
+        title = data.get('title')
+        genre_ids = data.get('genre_ids', [])
+
+        if not title:
+            return {"error": "Title is required"}, 422
+        
+        new_movie = Movie(title=title, user_id=user_id)
+
+        if genre_ids:
+            genres = Genre.query.filter(Genre.id.in_(genre_ids)).all()
+            if len(genres) != len(genre_ids):
+                return {"error": "One or more genre IDs are invalid"}, 422
+        try:
+            db.session.add(new_movie)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return {"error": "Database error"}, 422
+        
+        return movie_schema.dump(new_movie), 201
 
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
