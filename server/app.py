@@ -186,8 +186,14 @@ class GenreList(Resource):
         db.session.commit()
 
         return flat_genres_schema.dump(new_genre), 201
-    
 
+class GenreDetail(Resource):
+    def get(self, id):
+        genre = Genre.query.get(id)
+        if not genre:
+            return {"error": "Genre not found"}, 404
+        return flat_genres_schema.dump(genre), 200
+    
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(CheckSession, '/check_session')
