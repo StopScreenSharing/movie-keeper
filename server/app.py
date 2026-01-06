@@ -202,6 +202,9 @@ api.add_resource(Logout, '/logout')
 api.add_resource(MovieList, '/movies')
 api.add_resource(MovieDetail, '/movies/<int:id>')
 
+api.add_resource(GenreList, '/genres')
+api.add_resource(GenreDetail, '/genres/<int:id>')
+
 
 
 

@@ -18,7 +18,7 @@ class User(db.Model):
     #Relationships
     movies = db.relationship("Movie", backref="user", cascade="all, delete-orphan")
 
-    genres = association_proxy('movies', 'genres')
+    genres = association_proxy('movies', 'genre')
 
 
     
@@ -50,13 +50,6 @@ class User(db.Model):
     
     def __repr__(self):
         return f'<User {self.username}, ID: {self.id}>'
-    
-#Join Table for Movie and Genre many-to-many
-movie_genre_association = db.Table(
-    'movie_genre_association',
-    db.Column('movie_id', db.Integer, db.ForeignKey('movies.id'), primary_key=True),
-    db.Column('genre_id', db.Integer, db.ForeignKey('genres.id'), primary_key=True)
-)
 
 
 class Movie(db.Model):
@@ -64,14 +57,10 @@ class Movie(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     
     #Relationships
-    genres = db.relationship(
-        "Genre",
-        secondary=movie_genre_association,
-        back_populates="movies"
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    genre_id = db.Column(db.Integer, db.ForeignKey("genres.id"), nullable=False)
 
     #Validation
     @validates("title")
@@ -89,14 +78,9 @@ class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
 
-    
     #Relationships
-    movies = db.relationship(
-        "Movie", 
-        secondary=movie_genre_association,
-        back_populates="genres"
-    )
-    
+    movies = db.relationship("Movie", backref="genre", cascade="all, delete-orphan")
+
     users = association_proxy('movies', 'user')
 
     
