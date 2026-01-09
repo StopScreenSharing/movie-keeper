@@ -18,7 +18,7 @@ class User(db.Model):
     #Relationships
     movies = db.relationship("Movie", backref="user", cascade="all, delete-orphan")
 
-    genres = association_proxy('movies', 'genre')
+    genres = db.relationship("Genre", secondary="movies", back_populates="users", viewonly=True)
 
 
     
@@ -70,7 +70,7 @@ class Movie(db.Model):
         return value.strip()
 
     def __repr__(self):
-        return f'<Movie {self.title}, User ID: {self.user_id}>'
+        return f'<Movie {self.title}, Genre: {self.genre.name if self.genre else None}>'
 
 class Genre(db.Model):
     __tablename__ = 'genres'
@@ -80,10 +80,7 @@ class Genre(db.Model):
 
     #Relationships
     movies = db.relationship("Movie", backref="genre", cascade="all, delete-orphan")
-
-    users = association_proxy('movies', 'user')
-
-    
+ 
     #Validation
     @validates("name")
     def validate_name(self, key, value):
