@@ -6,211 +6,35 @@
 from flask import request, session, jsonify, abort
 from flask_restful import Resource
 from sqlalchemy.exc import IntegrityError
+from flask import Flask, request, make_response
 
 # Local imports
 from config import app, db, api, bcrypt
 # Add your model imports
 from models import User, Movie, Genre
-from schemas import user_schema, flat_genres_schema, movie_schema, movies_schema
 
 # Views go here!
 
-# USER CREATE AND READ #
-class Signup(Resource):
+class Users(Resource):
     def post(self):
         data = request.get_json()
-
-        username = data.get('username')
-        password = data.get('password')
-
-        if not username or not password:
-            return {"error": "Username and password required"}, 422
-        
-        if User.query.filter_by(username=username).first():
-            return {"error": "Username already taken"}, 422
-        
-        new_user = User(username=username)
-        new_user.password = password
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        session['user_id'] = new_user.id
-
-        return user_schema.dump(new_user), 201
-
-class Login(Resource):
-    def post(self):
-        data = request.get_json()
-
-        username = data.get('username')
-        password = data.get('password')
-
-        user = User.query.filter_by(username=username).first()
-
-        if user and user.authenticate(password):
-            session['user_id'] = user.id
-            return user_schema.dump(user), 200
-        return {"error": "Invalid username or password"}, 401
-
-class CheckSession(Resource):
-    def get(self):
-        user_id = session.get('user_id')
-        if user_id:
-            user = User.query.filter(User.id == user_id).first()
-            if user:
-                return user_schema.dump(user), 200
-        return {"message": "Not logged in"}, 401
-
-class Logout(Resource):
-    def delete(self):
-        if session.get('user_id'):
-            session.clear()
-            return {"message": "Logged out successfully"}, 200
-        return {"error": "Not logged in"}, 401
-
-
-# MOVIE CRUD #
-class MovieList(Resource):
-    def get(self):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": "Unauthorized"}, 401
-        
-        movies = Movie.query.filter_by(user_id=user_id).all()
-        return movies_schema.dump(movies), 200
-    
-    def post(self):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": "Unauthorized"}, 401
-        
-        data = request.get_json()
-        title = data.get('title')
-        genre_ids = data.get('genre_ids', [])
-
-        if not title:
-            return {"error": "Title is required"}, 422
-        
-        new_movie = Movie(title=title, user_id=user_id)
-
-        if genre_ids:
-            genres = Genre.query.filter(Genre.id.in_(genre_ids)).all()
-            if len(genres) != len(genre_ids):
-                return {"error": "One or more genre IDs are invalid"}, 422
+        print(data)
         try:
-            db.session.add(new_movie)
+            new_user = User(username=data["username"])
+            new_user.password = data["password"]
+
+            db.session.add(new_user)
             db.session.commit()
+            print("Signed")
+            return new_user.to_dict(), 201
+        
+        except ValueError as e:
+            return {"errors": [str(e)]}, 400
         except IntegrityError:
             db.session.rollback()
-            return {"error": "Database error"}, 422
-        
-        return movie_schema.dump(new_movie), 201
+            return {"errors": ["Username already exists"]}, 409
 
-class MovieDetail(Resource):
-    def get(self, id):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": "Unauthorized"}, 401
-        
-        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
-        if not movie:
-            return {"error": "Movie not found"}, 404
-        
-        return movie_schema.dump(movie), 200
-    
-    def patch(self, id):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": 'Unauthorized'}, 401
-        
-        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
-        if not movie:
-            return {"error": "Movie bot found"}, 404
-        
-        data = request.get_json()
-        title = data.get('title')
-        genre_ids = data.get('genre_ids')
-
-        if title is not None:
-            movie.title = title
-        
-        if genre_ids is not None:
-            if not genre_ids:
-                movie.genres = []
-            else:
-                genres = Genre.query.filter(Genre.id.in_(genre_ids)).all()
-                if len(genres) != len(genre_ids):
-                    return {"error": "One or more genre IDs are invalid"}, 422
-                movie.genres = genres
-        
-        db.session.commit()
-        return movie_schema.dump(movie), 200
-    
-    def delete(self, id):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": "Unauthorized"}, 401
-        
-        movie = Movie.query.filter_by(id=id, user_id=user_id).first()
-        if not movie:
-            return {"error": "Movie not found"}, 404
-        
-        db.session.delete(movie)
-        db.session.commit()
-        return {"message": "Movie deleted"}, 200
-
-# GENRE CREATE AND READ #
-
-class GenreList(Resource):
-    def get(self):
-        genres = Genre.query.order_by(Genre.name).all()
-        return flat_genres_schema.dump(genres), 200
-    
-    def post(self):
-        user_id = session.get('user_id')
-        if not user_id:
-            return {"error": "Unauthorized"}, 401
-        
-        data = request.get_json()
-        name = data.get('name')
-
-        if not name:
-            return {"error": "Name is required"}, 422
-        
-        if Genre.query.filter_by(name=name.strip()).first():
-            return {"error": "Genre already exists"}, 422
-        
-        new_genre = Genre(name=name.strip())
-        db.session.add(new_genre)
-        db.session.commit()
-
-        return flat_genres_schema.dump(new_genre), 201
-
-class GenreDetail(Resource):
-    def get(self, id):
-        genre = Genre.query.get(id)
-        if not genre:
-            return {"error": "Genre not found"}, 404
-        return flat_genres_schema.dump(genre), 200
-    
-api.add_resource(Signup, '/signup')
-api.add_resource(Login, '/login')
-api.add_resource(CheckSession, '/check_session')
-api.add_resource(Logout, '/logout')
-
-api.add_resource(MovieList, '/movies')
-api.add_resource(MovieDetail, '/movies/<int:id>')
-
-api.add_resource(GenreList, '/genres')
-api.add_resource(GenreDetail, '/genres/<int:id>')
-
-
-
-
-@app.route('/')
-def index():
-    return '<h1>Project Server</h1>'
+api.add_resource(Users, '/users')
 
 
 if __name__ == '__main__':

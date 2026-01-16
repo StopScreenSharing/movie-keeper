@@ -3,11 +3,12 @@ from config import db, bcrypt
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
+from sqlalchemy_serializer import SerializerMixin
 
 
 # Models go here!
 
-class User(db.Model):
+class User(db.Model, SerializerMixin ):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -18,7 +19,7 @@ class User(db.Model):
     #Relationships
     movies = db.relationship("Movie", backref="user", cascade="all, delete-orphan")
 
-    genres = db.relationship("Genre", secondary="movies", back_populates="users", viewonly=True)
+    genres = db.relationship("Genre", secondary="movies", viewonly=True)
 
 
     
@@ -52,7 +53,7 @@ class User(db.Model):
         return f'<User {self.username}, ID: {self.id}>'
 
 
-class Movie(db.Model):
+class Movie(db.Model, SerializerMixin):
     __tablename__ = 'movies'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -72,13 +73,13 @@ class Movie(db.Model):
     def __repr__(self):
         return f'<Movie {self.title}, Genre: {self.genre.name if self.genre else None}>'
 
-class Genre(db.Model):
+class Genre(db.Model, SerializerMixin):
     __tablename__ = 'genres'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
 
-    #Relationships
+    #Relationship
     movies = db.relationship("Movie", backref="genre", cascade="all, delete-orphan")
  
     #Validation
