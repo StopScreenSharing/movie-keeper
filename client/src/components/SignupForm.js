@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
+import { useHistory } from "react-router-dom";
 
 export const SignupForm = () => {
     const [users, setUsers] = useState([{}]);
     const [refreshPage, setRefreshPage] = useState(false);
+    const history = useHistory();
 
     // useEffect(() => {
     //     console.log("FETCH! ");
@@ -36,7 +38,7 @@ export const SignupForm = () => {
                 body: JSON.stringify(values, null, 2),
             }).then((res) => {
                 if (res.ok) {
-                    setRefreshPage(!refreshPage);
+                    history.push("/login");
                 } else {
                     res.json().then((data) => {
                         alert(data.errors[0]);
@@ -71,6 +73,7 @@ export const SignupForm = () => {
                 />
                 <p style={{ color: "red" }}> {formik.errors.password}</p>
                 <button type="submit">submit</button>
+                <button type="button" onClick={() => history.push("/login")}>Login</button>
             </form>
         </div>
     )
