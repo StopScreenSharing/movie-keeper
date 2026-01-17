@@ -6,10 +6,38 @@ from sqlalchemy.orm import validates
 from sqlalchemy_serializer import SerializerMixin
 
 
+
 # Models go here!
 
 class User(db.Model, SerializerMixin ):
     __tablename__ = 'users'
+
+    serialize_rules = (
+        "-_password_hash",
+        "-movies.user",
+        "-movies.genre",
+    )
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.username,
+            "genres": [
+                {
+                    "name": genre.name,
+                    "movies": [
+                        {
+                            "id": movie.id,
+                            "title": movie.title
+                        }
+                        for movie in genre.movies
+                        if movie.user_id == self.id
+                    ]
+                }
+                for genre in self.genres
+            ]
+        }
+
+
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, unique=True, nullable=False)
@@ -19,7 +47,7 @@ class User(db.Model, SerializerMixin ):
     #Relationships
     movies = db.relationship("Movie", backref="user", cascade="all, delete-orphan")
 
-    genres = db.relationship("Genre", secondary="movies", viewonly=True)
+    genres = db.relationship("Genre", secondary="movies", primaryjoin="User.id == Movie.user_id", secondaryjoin="Genre.id == Movie.genre_id", viewonly=True)
 
 
     
@@ -56,6 +84,12 @@ class User(db.Model, SerializerMixin ):
 class Movie(db.Model, SerializerMixin):
     __tablename__ = 'movies'
 
+    serialize_rules = (
+        "-user.movies",
+        "-genre.movies"
+    )
+
+
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     
@@ -75,6 +109,12 @@ class Movie(db.Model, SerializerMixin):
 
 class Genre(db.Model, SerializerMixin):
     __tablename__ = 'genres'
+
+    serialize_rules = (
+        "-movies.genre",
+        "-movies.user",
+    )
+
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)

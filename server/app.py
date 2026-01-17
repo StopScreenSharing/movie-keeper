@@ -15,7 +15,7 @@ from models import User, Movie, Genre
 
 # Views go here!
 
-class Users(Resource):
+class Signup(Resource):
     def post(self):
         data = request.get_json()
         print(data)
@@ -62,7 +62,7 @@ class Logout(Resource):
 
 
 
-api.add_resource(Users, '/users')
+api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(CheckSession, '/check_session')
 api.add_resource(Logout, '/logout')
