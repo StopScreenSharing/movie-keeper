@@ -23,6 +23,7 @@ class User(db.Model, SerializerMixin ):
             "name": self.username,
             "genres": [
                 {
+                    "id": genre.id,
                     "name": genre.name,
                     "movies": [
                         {
