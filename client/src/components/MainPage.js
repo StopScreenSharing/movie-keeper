@@ -6,7 +6,7 @@ import React, { useContext } from "react";
 
 function MainPage() {
     const { user, setUser } = useContext(UserContext);
-   return <h1>Welcome, {user.username}</h1>
+   return <h1>Welcome, {user.name}</h1>
 }
 
 export default MainPage;

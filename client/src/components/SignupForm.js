@@ -1,26 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import { useHistory } from "react-router-dom";
 
 export const SignupForm = () => {
-    const [users, setUsers] = useState([{}]);
-    const [refreshPage, setRefreshPage] = useState(false);
+    const [error, setError] = useState(null);
     const history = useHistory();
 
-    // useEffect(() => {
-    //     console.log("FETCH! ");
-    //     fetch("/users")
-    //     .then((res) => res.json())
-    //     .then((data) => {
-    //         setUsers(data);
-    //         console.log(data);
-    //     });
-    // }, [refreshPage]);
-
     const formSchema = yup.object().shape({
-        username: yup.string().required("Invalid username").required("Must enter username"),
-        password: yup.string().required("Must enter a password").max(15)
+        username: yup
+            .string()
+            .required("Must enter username"),
+        password: yup
+            .string()
+            .required("Must enter a password")
+            .max(15, "Password must be 15 characters or less"),
     });
 
     const formik = useFormik({
@@ -30,18 +24,18 @@ export const SignupForm = () => {
         },
         validationSchema: formSchema,
         onSubmit: (values) => {
-            fetch("/users", {
+            setError(null);
+
+            fetch("/signup", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(values, null, 2),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(values),
             }).then((res) => {
                 if (res.ok) {
                     history.push("/login");
                 } else {
                     res.json().then((data) => {
-                        alert(data.errors[0]);
+                        setError(data.errors?.[0] || "Username already exists");
                     });
                 }
             });
@@ -51,30 +45,50 @@ export const SignupForm = () => {
     return (
         <div>
             <h1>Signup</h1>
+
             <form onSubmit={formik.handleSubmit}>
-                <label htmlFor="username">Usesrname</label>
+                <label htmlFor="username">Username</label>
                 <br />
-                <input 
+                <input
                     id="username"
                     name="username"
-                    onChange={formik.handleChange}
+                    onChange={(e) => {
+                        formik.handleChange(e);
+                        setError(null);
+                    }}
                     value={formik.values.username}
                 />
-                <p style={{ color: "red" }}> {formik.errors.username}</p>
-                
+                {formik.errors.username && (
+                    <p style={{ color: "red" }}>{formik.errors.username}</p>
+                )}
+
                 <label htmlFor="password">Password</label>
                 <br />
-
                 <input
-                id="password"
-                name="password"
-                onChange={formik.handleChange}
-                value={formik.values.password}
+                    id="password"
+                    name="password"
+                    type="password"
+                    onChange={(e) => {
+                        formik.handleChange(e);
+                        setError(null);
+                    }}
+                    value={formik.values.password}
                 />
-                <p style={{ color: "red" }}> {formik.errors.password}</p>
-                <button type="submit">submit</button>
-                <button type="button" onClick={() => history.push("/login")}>Login</button>
+                {formik.errors.password && (
+                    <p style={{ color: "red" }}>{formik.errors.password}</p>
+                )}
+
+                {error && (
+                    <p style={{ color: "red", marginTop: "10px" }}>
+                        {error}
+                    </p>
+                )}
+
+                <button type="submit">Submit</button>
+                <button type="button" onClick={() => history.push("/login")}>
+                    Login
+                </button>
             </form>
         </div>
-    )
-}
+    );
+};

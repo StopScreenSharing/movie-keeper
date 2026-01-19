@@ -31,8 +31,9 @@ export const LoginForm = () => {
           if (res.ok) return res.json();
           else throw new Error("Invalid username or password");
         })
-        .then((user) => {
-          setUser(user);
+        .then((userData) => {
+          setUser(userData);
+          console.log(userData)
           history.push("/");
         })
         .catch((err) => {

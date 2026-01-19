@@ -25,7 +25,7 @@ function NavBar() {
       </NavLink>
 
       <NavLink to="/moviespage" className="nav-link">
-        Movies
+        Add Movies
       </NavLink>
 
       {!user ? (
