@@ -1,7 +1,6 @@
 # movie-keeper
 
-A small JavaScript project to help you catalog, track, and manage your movie collection. Use movie-keeper to record movies you own or want to watch, add ratings and tags, search your collection, and export or import lists.
-
+A small Full stack project to help you catalog, track, and manage your movie collection. Use movie-keeper to record movies you own or want to watch.
 
 ---
 
@@ -41,7 +40,6 @@ npm install
 Create a `.env` file if your project uses environment variables:
 ```bash
 cp .env.example .env
-# then edit .env with your values
 ```
 
 Example environment variables (adjust to your project):
@@ -72,7 +70,5 @@ Recommended workflow:
 Run tests:
 ```bash
 npm test
-# or
-npm run test:watch
 ```
 
