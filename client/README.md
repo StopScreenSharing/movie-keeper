@@ -58,15 +58,6 @@ npm start
 Open the web UI at http://localhost:5555 (if applicable), or run the CLI command:
 ```bash
 python app.py
-
-Export collection to JSON:
-```bash
-npm run export -- --format json --output ./backups/movies.json
-```
-
-Import a CSV:
-```bash
-npm run import -- --file ./imports/movies.csv
 ```
 
 Adjust commands to match your project's scripts in package.json.
