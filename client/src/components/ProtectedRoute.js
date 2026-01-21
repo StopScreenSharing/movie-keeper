@@ -5,7 +5,7 @@ import { UserContext } from "../context/UserContext";
 function ProtectedRoute({ children, ...rest }) {
   const { user, loading } = useContext(UserContext);
 
-  if (loading) return null; // or a spinner
+  if (loading) return null;
 
   return (
     <Route

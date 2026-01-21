@@ -17,15 +17,16 @@ function MoviesPage() {
       .catch((err) => console.error("Failed to fetch genres:", err));
   }, []);
 
+
   const formSchema = yup.object().shape({
-    title: yup
-      .string()
-      .required("Movie title is required"),
+    title: yup.string().required("Movie title is required"),
     genre_id: yup
       .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
       .required("Please select a genre"),
     new_genre: yup.string(),
   });
+  
 
   const formik = useFormik({
     initialValues: {
@@ -35,6 +36,8 @@ function MoviesPage() {
     },
     validationSchema: formSchema,
     onSubmit: (values, { resetForm }) => {
+      setGenreError(null);
+
       fetch("/movies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -47,8 +50,42 @@ function MoviesPage() {
           if (!res.ok) throw new Error("Failed to add movie");
           return res.json();
         })
-        .then((updatedUser) => {
-          setUser(updatedUser);
+        .then((newMovie) => {
+          setUser((prevUser) => {
+            const genreExists = prevUser.genres.find(
+              (g) => g.id === newMovie.genre_id
+            );
+
+            if (genreExists) {
+              
+              return {
+                ...prevUser,
+                genres: prevUser.genres.map((genre) =>
+                  genre.id === newMovie.genre_id
+                    ? { ...genre, movies: [...genre.movies, newMovie] }
+                    : genre
+                ),
+              };
+            } else {
+              
+              const genreData = genres.find(
+                (g) => g.id === newMovie.genre_id
+              );
+
+              return {
+                ...prevUser,
+                genres: [
+                  ...prevUser.genres,
+                  {
+                    id: genreData.id,
+                    name: genreData.name,
+                    movies: [newMovie],
+                  },
+                ],
+              };
+            }
+          });
+
           resetForm();
           setShowNewGenreInput(false);
         })
@@ -120,10 +157,7 @@ function MoviesPage() {
 
         <label>Genre</label>
         <br />
-        <select
-          value={formik.values.genre_id}
-          onChange={handleGenreChange}
-        >
+        <select value={formik.values.genre_id} onChange={handleGenreChange}>
           <option value="">Select genre</option>
 
           {genres.map((genre) => (
@@ -151,16 +185,15 @@ function MoviesPage() {
                 setGenreError(null);
               }}
             />
-            {genreError && (
-              <p style={{ color: "red" }}>{genreError}</p>
-            )}
+            {genreError && <p style={{ color: "red" }}>{genreError}</p>}
             <button type="button" onClick={handleAddGenre}>
               Add Genre
             </button>
           </>
         )}
 
-        <br /><br />
+        <br />
+        <br />
 
         <button type="submit">Add Movie</button>
       </form>
@@ -169,4 +202,3 @@ function MoviesPage() {
 }
 
 export default MoviesPage;
-

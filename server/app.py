@@ -77,7 +77,7 @@ class Movies(Resource):
         db.session.add(new_movie)
         db.session.commit()
 
-        return user.to_dict(), 201
+        return new_movie.to_dict(), 201
 
 class MovieById(Resource):
     def delete(self, movie_id):
@@ -92,7 +92,7 @@ class MovieById(Resource):
         db.session.delete(movie)
         db.session.commit()
 
-        return user.to_dict(), 200
+        return {"message": "Movie deleted"}, 200
 
     def patch(self, movie_id):
         user = User.query.get(session.get("user_id"))
@@ -102,20 +102,21 @@ class MovieById(Resource):
         movie = Movie.query.get(movie_id)
         if not movie or movie.user_id != user.id:
             return {"error": "Movie not found"}, 404
+       
         data = request.get_json()
-        title = data.get("title")
-        genre_id = data.get("genre_id")
 
-        if title:
-            movie.title = title.strip()
-        if genre_id:
-            genre = Genre.query.get(genre_id)
-            if not genre:
+        if "title" in data and data["title"].strip():
+            movie.title = data["title"].strip()
+        
+        if "genre_id" in data:
+            genre = Genre.query.get(data["genre_id"])
+            if not genre: 
                 return {"error": "Genre not found"}, 404
-            movie.genre_id = genre_id
+            movie.genre_id = data["genre_id"]
+
         
         db.session.commit()
-        return user.to_dict(), 200
+        return movie.to_dict(), 200
 
 class Genres(Resource):
 
